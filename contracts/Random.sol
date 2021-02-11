@@ -21,14 +21,14 @@ contract Random is Ownable{
         return msg.value;
     }
     
-    function placeBet(uint _guess) public payable costs(0.001 ether) returns (bool){
+    function placeBet() public payable costs(0.001 ether) returns (bool){
         require(balance >= msg.value * 2, "Not enough funds in the contract");
         
         bool result;
 
-        if((block.timestamp % 2) == _guess) {
+        if((block.timestamp % 2) == 0) {
             result = true;
-        }else{
+        }else if(block.timestamp % 2 == 1) {
             result = false;
         }
         emit wager(msg.sender, msg.value, result);
