@@ -9,7 +9,7 @@ $(document).ready(function() {
     $("#flip_button").click(flip);
     $("#fund_contract_button").click(fundContract);
     $("#withdraw_button").click(withdrawBalance);
-    $("#balance_button").click(getBalance);
+
 });
 
 
@@ -26,9 +26,9 @@ function flip(){
     })
     .on("receipt", function(receipt){
         console.log(receipt);
-        if(receipt.events.placeBet.returnValues[2] == false){
+        if(receipt.events.wager.returnValues[2] === false){
             alert("You lost" + wager + " Ether");
-        }else if(receipt.events.placeBet.returnValues[2] == true){
+        }else if(receipt.events.wager.returnValues[2] === true){
             alert("You won " + wager + " Ether!");
         }
     })
