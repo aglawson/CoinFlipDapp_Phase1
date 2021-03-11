@@ -1,10 +1,10 @@
-const Random = artifacts.require("Random");
+const RandomPT = artifacts.require("RandomPT");
 const truffleAssert = require("truffle-assertions");
 
-contract("Random", async function(accounts) {
+contract("RandomPT", async function(accounts) {
     let instance;
     beforeEach(async function() {
-        instance = await Random.deployed();
+        instance = await RandomPT.deployed();
     });
 
     it("should be able to accept a bet of sufficient value", async function() {

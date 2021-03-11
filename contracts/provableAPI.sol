@@ -2,7 +2,7 @@
 /*
 Copyright (c) 2015-2016 Oraclize SRL
 Copyright (c) 2016-2019 Oraclize LTD
-Copyright (c) 2019-2020 Provable Things Limited
+Copyright (c) 2019 Provable Things Limited
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -19,31 +19,32 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-pragma solidity 0.7.2; // Incompatible compiler version - please select a compiler within the stated pragma range, or use a different version of the provableAPI!
+pragma solidity 0.5.12; // Incompatible compiler version - please select a compiler within the stated pragma range, or use a different version of the provableAPI!
 
 // Dummy contract only used to emit to end-user they are using wrong solc
-abstract contract solcChecker {
-/* INCOMPATIBLE SOLC: import the following instead: "github.com/oraclize/ethereum-api/oraclizeAPI_0.4.sol" */ function f(bytes calldata x) virtual external;
+contract solcChecker {
+/* INCOMPATIBLE SOLC: import the following instead: "github.com/oraclize/ethereum-api/oraclizeAPI_0.4.sol" */ function f(bytes calldata x) external;
 }
 
-interface ProvableI {
+contract ProvableI {
 
-    function cbAddress() external returns (address _cbAddress);
+    address public cbAddress;
+
     function setProofType(byte _proofType) external;
     function setCustomGasPrice(uint _gasPrice) external;
-    function getPrice(string calldata _datasource) external returns (uint _dsprice);
+    function getPrice(string memory _datasource) public returns (uint _dsprice);
     function randomDS_getSessionPubKeyHash() external view returns (bytes32 _sessionKeyHash);
-    function getPrice(string calldata _datasource, uint _gasLimit)  external returns (uint _dsprice);
-    function queryN(uint _timestamp, string calldata _datasource, bytes calldata _argN) external payable returns (bytes32 _id);
+    function getPrice(string memory _datasource, uint _gasLimit) public returns (uint _dsprice);
+    function queryN(uint _timestamp, string memory _datasource, bytes memory _argN) public payable returns (bytes32 _id);
     function query(uint _timestamp, string calldata _datasource, string calldata _arg) external payable returns (bytes32 _id);
-    function query2(uint _timestamp, string calldata _datasource, string calldata _arg1, string calldata _arg2) external payable returns (bytes32 _id);
+    function query2(uint _timestamp, string memory _datasource, string memory _arg1, string memory _arg2) public payable returns (bytes32 _id);
     function query_withGasLimit(uint _timestamp, string calldata _datasource, string calldata _arg, uint _gasLimit) external payable returns (bytes32 _id);
     function queryN_withGasLimit(uint _timestamp, string calldata _datasource, bytes calldata _argN, uint _gasLimit) external payable returns (bytes32 _id);
     function query2_withGasLimit(uint _timestamp, string calldata _datasource, string calldata _arg1, string calldata _arg2, uint _gasLimit) external payable returns (bytes32 _id);
 }
 
-interface OracleAddrResolverI {
-    function getAddress() external returns (address _address);
+contract OracleAddrResolverI {
+    function getAddress() public returns (address _address);
 }
 /*
 Begin solidity-cborutils
@@ -104,7 +105,7 @@ library Buffer {
       *      would exceed the capacity of the buffer.
       * @param _buf The buffer to append to.
       * @param _data The data to append.
-      * @return _buffer The original buffer.
+      * @return The original buffer.
       *
       */
     function append(buffer memory _buf, bytes memory _data) internal pure returns (buffer memory _buffer) {
@@ -142,6 +143,7 @@ library Buffer {
       * exceed the capacity of the buffer.
       * @param _buf The buffer to append to.
       * @param _data The data to append.
+      * @return The original buffer.
       *
       */
     function append(buffer memory _buf, uint8 _data) internal pure {
@@ -162,7 +164,7 @@ library Buffer {
       * exceed the capacity of the buffer.
       * @param _buf The buffer to append to.
       * @param _data The data to append.
-      * @return _buffer The original buffer.
+      * @return The original buffer.
       *
       */
     function appendInt(buffer memory _buf, uint _data, uint _len) internal pure returns (buffer memory _buffer) {
@@ -356,11 +358,11 @@ contract usingProvable {
      *      meant to be defined in child contract when proofs are used.
      *      The function bodies simply silence compiler warnings.
      */
-    function __callback(bytes32 _myid, string memory _result) virtual public {
+    function __callback(bytes32 _myid, string memory _result) public {
         __callback(_myid, _result, new bytes(0));
     }
 
-    function __callback(bytes32 _myid, string memory _result, bytes memory _proof) virtual public {
+    function __callback(bytes32 _myid, string memory _result, bytes memory _proof) public {
       _myid; _result; _proof;
       provable_randomDS_args[bytes32(0)] = bytes32(0);
     }
@@ -378,7 +380,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * 200000) {
             return 0; // Unexpectedly high price
         }
-        return provable.query{value: price}(0, _datasource, _arg);
+        return provable.query.value(price)(0, _datasource, _arg);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, string memory _arg) provableAPI internal returns (bytes32 _id) {
@@ -386,7 +388,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * 200000) {
             return 0; // Unexpectedly high price
         }
-        return provable.query{value: price}(_timestamp, _datasource, _arg);
+        return provable.query.value(price)(_timestamp, _datasource, _arg);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, string memory _arg, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -394,7 +396,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * _gasLimit) {
             return 0; // Unexpectedly high price
         }
-        return provable.query_withGasLimit{value: price}(_timestamp, _datasource, _arg, _gasLimit);
+        return provable.query_withGasLimit.value(price)(_timestamp, _datasource, _arg, _gasLimit);
     }
 
     function provable_query(string memory _datasource, string memory _arg, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -402,7 +404,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * _gasLimit) {
            return 0; // Unexpectedly high price
         }
-        return provable.query_withGasLimit{value: price}(0, _datasource, _arg, _gasLimit);
+        return provable.query_withGasLimit.value(price)(0, _datasource, _arg, _gasLimit);
     }
 
     function provable_query(string memory _datasource, string memory _arg1, string memory _arg2) provableAPI internal returns (bytes32 _id) {
@@ -410,7 +412,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * 200000) {
             return 0; // Unexpectedly high price
         }
-        return provable.query2{value: price}(0, _datasource, _arg1, _arg2);
+        return provable.query2.value(price)(0, _datasource, _arg1, _arg2);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, string memory _arg1, string memory _arg2) provableAPI internal returns (bytes32 _id) {
@@ -418,7 +420,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * 200000) {
             return 0; // Unexpectedly high price
         }
-        return provable.query2{value: price}(_timestamp, _datasource, _arg1, _arg2);
+        return provable.query2.value(price)(_timestamp, _datasource, _arg1, _arg2);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, string memory _arg1, string memory _arg2, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -426,7 +428,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * _gasLimit) {
             return 0; // Unexpectedly high price
         }
-        return provable.query2_withGasLimit{value: price}(_timestamp, _datasource, _arg1, _arg2, _gasLimit);
+        return provable.query2_withGasLimit.value(price)(_timestamp, _datasource, _arg1, _arg2, _gasLimit);
     }
 
     function provable_query(string memory _datasource, string memory _arg1, string memory _arg2, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -434,7 +436,7 @@ contract usingProvable {
         if (price > 1 ether + tx.gasprice * _gasLimit) {
             return 0; // Unexpectedly high price
         }
-        return provable.query2_withGasLimit{value: price}(0, _datasource, _arg1, _arg2, _gasLimit);
+        return provable.query2_withGasLimit.value(price)(0, _datasource, _arg1, _arg2, _gasLimit);
     }
 
     function provable_query(string memory _datasource, string[] memory _argN) provableAPI internal returns (bytes32 _id) {
@@ -443,7 +445,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = stra2cbor(_argN);
-        return provable.queryN{value: price}(0, _datasource, args);
+        return provable.queryN.value(price)(0, _datasource, args);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, string[] memory _argN) provableAPI internal returns (bytes32 _id) {
@@ -452,7 +454,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = stra2cbor(_argN);
-        return provable.queryN{value: price}(_timestamp, _datasource, args);
+        return provable.queryN.value(price)(_timestamp, _datasource, args);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, string[] memory _argN, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -461,7 +463,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = stra2cbor(_argN);
-        return provable.queryN_withGasLimit{value: price}(_timestamp, _datasource, args, _gasLimit);
+        return provable.queryN_withGasLimit.value(price)(_timestamp, _datasource, args, _gasLimit);
     }
 
     function provable_query(string memory _datasource, string[] memory _argN, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -470,7 +472,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = stra2cbor(_argN);
-        return provable.queryN_withGasLimit{value: price}(0, _datasource, args, _gasLimit);
+        return provable.queryN_withGasLimit.value(price)(0, _datasource, args, _gasLimit);
     }
 
     function provable_query(string memory _datasource, string[1] memory _args) provableAPI internal returns (bytes32 _id) {
@@ -639,7 +641,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = ba2cbor(_argN);
-        return provable.queryN{value: price}(0, _datasource, args);
+        return provable.queryN.value(price)(0, _datasource, args);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, bytes[] memory _argN) provableAPI internal returns (bytes32 _id) {
@@ -648,7 +650,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = ba2cbor(_argN);
-        return provable.queryN{value: price}(_timestamp, _datasource, args);
+        return provable.queryN.value(price)(_timestamp, _datasource, args);
     }
 
     function provable_query(uint _timestamp, string memory _datasource, bytes[] memory _argN, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -657,7 +659,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = ba2cbor(_argN);
-        return provable.queryN_withGasLimit{value: price}(_timestamp, _datasource, args, _gasLimit);
+        return provable.queryN_withGasLimit.value(price)(_timestamp, _datasource, args, _gasLimit);
     }
 
     function provable_query(string memory _datasource, bytes[] memory _argN, uint _gasLimit) provableAPI internal returns (bytes32 _id) {
@@ -666,7 +668,7 @@ contract usingProvable {
             return 0; // Unexpectedly high price
         }
         bytes memory args = ba2cbor(_argN);
-        return provable.queryN_withGasLimit{value: price}(0, _datasource, args, _gasLimit);
+        return provable.queryN_withGasLimit.value(price)(0, _datasource, args, _gasLimit);
     }
 
     function provable_query(string memory _datasource, bytes[1] memory _args) provableAPI internal returns (bytes32 _id) {
@@ -1083,7 +1085,7 @@ contract usingProvable {
              Check the relaxed random contract at https://github.com/oraclize/ethereum-examples
              for an idea on how to override and replace commit hash variables.
             */
-            mstore(add(unonce, 0x20), xor(blockhash(sub(number(), 1)), xor(coinbase(), timestamp())))
+            mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
             mstore(sessionKeyHash, 0x20)
             mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
         }
@@ -1319,7 +1321,7 @@ contract usingProvable {
     function safeMemoryCleaner() internal pure {
         assembly {
             let fmem := mload(0x40)
-            codecopy(fmem, codesize(), sub(msize(), fmem))
+            codecopy(fmem, codesize, sub(msize, fmem))
         }
     }
 }

@@ -1,5 +1,5 @@
-const RandomPT = artifacts.require("RandomPT");
+const RaffleContract = artifacts.require("RaffleContract");
 
-module.exports = function (deployer) {
-  deployer.deploy(RandomPT);
+module.exports = function(deployer, network, accounts) {
+  deployer.deploy(RaffleContract);
 };
